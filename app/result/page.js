@@ -16,9 +16,9 @@ const ResultPage = () => {
 
     useEffect(() => {
         const fetchCheckoutSession = async () => {
-            if(!session_id) return
-            
-            try{
+            if (!session_id) return
+
+            try {
                 const res = await fetch(`/api/checkout_session?session_id=${session_id}`)
                 const sessionData = await res.json()
                 if (res.ok) {
@@ -27,7 +27,7 @@ const ResultPage = () => {
                     setError(sessionData.error)
                 }
             } catch (err) {
-                setError('An error occured')
+                setError('An error occurred')
             } finally {
                 setLoading(false)
             }
@@ -35,68 +35,74 @@ const ResultPage = () => {
         fetchCheckoutSession()
     }, [session_id])
 
+    useEffect(() => {
+        if (session && session.payment_status !== "paid") {
+            setTimeout(() => {
+                router.push('/')
+            }, 5000) // Redirect after 5 seconds
+        }
+    }, [session, router])
+
     if (loading) {
-        return(
-            <Container 
-                maxWidth = "100vw"
-                sx = {{
+        return (
+            <Container
+                maxWidth="100vw"
+                sx={{
                     textAlign: 'center',
                     mt: 4,
                 }}
             >
                 <CircularProgress />
-                <Typography variant = "h6"> Loading... </Typography>
+                <Typography variant="h6">Loading...</Typography>
             </Container>
         )
     }
 
     if (error) {
-        return(
-            <Container 
-                maxWidth = "100vw"
-                sx = {{
+        return (
+            <Container
+                maxWidth="100vw"
+                sx={{
                     textAlign: 'center',
                     mt: 4,
                 }}
             >
-                <Typography variant = "h6">{error}</Typography>
+                <Typography variant="h6">{error}</Typography>
             </Container>
         )
     }
 
-    return(
-        <Container 
-            maxWidth = "100vw"
-            sx = {{
+    return (
+        <Container
+            maxWidth="100vw"
+            sx={{
                 textAlign: 'center',
                 mt: 4,
             }}
         >
-            {
-            session.payment_status === "paid" ? (
+            {session.payment_status === "paid" ? (
                 <>
-                <Typography variant = "h4">Thank you for purchasing</Typography>
-                <Box sx = {{mt: 22}}>
-                    <Typography variant="h6"> Session ID: {session_id}</Typography>
-                    <Typography varaint = "body1">
-                        We have received your payment. You will receive an email with the 
-                        order details shortly.
-                    </Typography>
-                </Box>
+                    <Typography variant="h4">Thank you for purchasing</Typography>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography variant="h6">Session ID: {session_id}</Typography>
+                        <Typography variant="body1">
+                            We have received your payment. You will receive an email with the
+                            order details shortly.
+                        </Typography>
+                    </Box>
                 </>
             ) : (
                 <>
-                <Typography variant = "h4">Payment Failed</Typography>
-                <Box sx = {{mt: 22}}>
-                    {/* <Typography variant="h6"> Session ID: {session_id}</Typography> */}
-                    <Typography varaint = "body1">
-                        Your payment was not successful. Please try again.
-                    </Typography>
-                </Box></>
+                    <Typography variant="h4">Payment Failed</Typography>
+                    <Box sx={{ mt: 2 }}>
+                        <Typography variant="body1">
+                            Your payment was not successful. Please try again.
+                        </Typography>
+                    </Box>
+                </>
             )}
         </Container>
     )
 }
 
 export default ResultPage
-

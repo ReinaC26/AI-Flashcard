@@ -4,33 +4,46 @@ import getStripe from '@/utils/get-stripe'
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { Container, AppBar, Toolbar, Button, Typography, Box, Grid } from '@mui/material'
 import Head from 'next/head'
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
 
-  const handleSubmit = async () => {
-    const checkoutSession = await fetch('/api/checkout_session', {
-      method: 'POST',
-      headers: {
-        origin: 'http://localhost:3001',
-      },
-    })
+    const handleGetStartedClick = () => {
+        router.push('/generate');  // This navigates from Home page to the Generate page
+    };
 
-    const checkoutSessionJson = await checkoutSession.json()
-
-    if (checkoutSession.statusCode === 500) {
-      console.error(checkoutSession.message)
-      return
+    const handleSubmit = async (subscriptionType) => {
+      try {
+        const checkoutSession = await fetch('/api/checkout_session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            origin: 'http://localhost:3001',
+          },
+          body: JSON.stringify({ subscriptionType }), // Send the subscription type
+        })
+    
+        const checkoutSessionJson = await checkoutSession.json()
+    
+        if (checkoutSession.status === 500) {
+          console.error(checkoutSessionJson.error.message)
+          return
+        }
+    
+        const stripe = await getStripe()
+        const { error } = await stripe.redirectToCheckout({
+          sessionId: checkoutSessionJson.id,
+        })
+    
+        if (error) {
+          console.warn(error.message)
+        }
+      } catch (err) {
+        console.error('Error during checkout:', err)
+      }
     }
 
-    const stripe = await getStripe()
-    const {error} = await stripe.redirectToCheckout({
-      sessionId: checkoutSessionJson.id,
-    })
-
-    if (error) {
-      console.warn(error.message)
-    }
-  }
   return (
     <Container maxWidth="100vw">
       <Head>
@@ -66,7 +79,7 @@ export default function Home() {
           {' '}
           The easiest way to make flashcards from your text
         </Typography>
-        <Button variant = "contained" color = "primary" sx = {{mt:2}}>
+        <Button variant = "contained" color = "primary" onClick={handleGetStartedClick} sx = {{mt:2}}>
           Get Started
         </Button>
       </Box>
@@ -97,53 +110,56 @@ export default function Home() {
           </Grid>
         </Grid>
       </Box>
-      <Box sx = {{my: 6, textAlign: "center"}}>
-        <Typography variant = "h4" gutterBottom>Pricing</Typography>
-        <Grid container spacing = {4}>
-          <Grid item xs = {12} md = {6}>
-            <Box 
-              sx ={{
-                p: 3,
-                border: '1px solid',
-                borderColor: 'grey.300',
-                borderRadius: 2,  
-            }}
-            >
-            <Typography variant = "h5" gutterBottom>Basic</Typography>
-            <Typography variant = "h6" gutterBottom>$5 / month</Typography>
-            <Typography>
-              {' '}
-              Access to basic flashcard features and limited storge.
-            </Typography>
-            <Button variant = "contained" color = "primary" sx = {{mt: 2}}>
-              Choose basic
-            </Button>
-            </Box>
-          </Grid>
-          <Grid item xs = {12} md = {6}>
-          <Box 
-              sx ={{
-                p: 3,
-                border: '1px solid',
-                borderColor: 'grey.300',
-                borderRadius: 2,  
-            }}
-            >
-            <Typography variant = "h5" gutterBottom>Pro</Typography>
-            <Typography variant = "h6" gutterBottom>$10 / month</Typography>
-            <Typography>
-              {' '}
-              Unlimited flashcards and storage, with priority support.
-            </Typography>
-            <Button 
-              variant = "contained" 
-              color = "primary" 
-              sx = {{mt: 2}}
-              onClick = {handleSubmit}
-            >
-              Choose Pro
-            </Button>
-            </Box>
+      <Box sx={{ my: 6, textAlign: "center" }}>
+          <Typography variant="h4" gutterBottom>Pricing</Typography>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Box 
+                sx={{
+                  p: 3,
+                  border: '1px solid',
+                  borderColor: 'grey.300',
+                  borderRadius: 2,  
+                }}
+              >
+                <Typography variant="h5" gutterBottom>Basic</Typography>
+                <Typography variant="h6" gutterBottom>$0 / month</Typography>
+                <Typography>
+                  Access to basic flashcard features and limited storage.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  sx={{ mt: 2 }}
+                  onClick={() => handleSubmit('basic')}  // Pass 'basic' as the subscription type
+                >
+                  Choose Basic
+                </Button>
+              </Box>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box 
+                sx={{
+                  p: 3,
+                  border: '1px solid',
+                  borderColor: 'grey.300',
+                  borderRadius: 2,  
+                }}
+              >
+                <Typography variant="h5" gutterBottom>Pro</Typography>
+                <Typography variant="h6" gutterBottom>$5 / month</Typography>
+                <Typography>
+                  Unlimited flashcards and storage, with priority support.
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  color="primary" 
+                  sx={{ mt: 2 }}
+                  onClick={() => handleSubmit('pro')}  // Pass 'pro' as the subscription type
+                >
+                  Choose Pro
+                </Button>
+              </Box>
             </Grid>
         </Grid>
       </Box>
